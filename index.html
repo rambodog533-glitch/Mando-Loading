@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mandalorian RP Loading</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Rajdhani', sans-serif;
+            color: white;
+            user-select: none;
+        }
+
+        /* --- VIDEO BACKGROUND --- */
+        .video-background {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .video-background iframe {
+            width: 100vw;
+            height: 56.25vw; /* Given a 16:9 aspect ratio */
+            min-height: 100vh;
+            min-width: 177.77vh; /* Given a 16:9 aspect ratio */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* --- OVERLAY --- */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4); /* Darkens video slightly */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px;
+            box-sizing: border-box;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            text-align: left;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .server-title {
+            font-size: 64px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            color: #eeeeee;
+            text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+            margin: 0;
+        }
+
+        .server-gamemode {
+            font-size: 32px;
+            font-weight: 600;
+            color: #3498db;
+            letter-spacing: 2px;
+            margin-top: 10px;
+        }
+
+        /* --- LOADING INFO --- */
+        .loading-container {
+            width: 100%;
+            max-width: 800px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .status-text {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #3498db;
+            width: 0%;
+            box-shadow: 0 0 15px #3498db;
+            transition: width 0.2s ease-out;
+        }
+
+        .map-info {
+            font-size: 18px;
+            color: #7f8c8d;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- CLAN LOGO / EXTRA (Optional) --- */
+        .mythosaur-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.1;
+            width: 400px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- YOUTUBE BACKGROUND (Replace 'VIDEO_ID' with your desired video ID) -->
+    <!-- Current ID is a high quality Mandalorian Ambience loop -->
+    <div class="video-background">
+        <iframe src="https://www.youtube.com/embed/r_6j87E0C0M?controls=0&showinfo=0&rel=0&autoplay=1&loop=1&mute=1&playlist=r_6j87E0C0M" 
+                frameborder="0" allowfullscreen></iframe>
+    </div>
+
+    <!-- Optional Mythosaur Overlay (Requires an image file, using text for now if missing) -->
+    <div class="overlay">
+        
+        <div class="header">
+            <h1 class="server-title">Mandalorian Roleplay</h1>
+            <div class="server-gamemode" id="gamemode">Star Wars RP</div>
+        </div>
+
+        <div class="loading-container">
+            <div class="status-text" id="status">Connecting to server...</div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress"></div>
+            </div>
+            <div class="map-info" id="mapname">Map: Unknown</div>
+        </div>
+
+    </div>
+
+    <!-- GMOD LOADING JAVASCRIPT -->
+    <script>
+        // GMod calls these functions
+        function GameDetails( servername, serverurl, mapname, maxplayers, steamid, gamemode, volume, language ) {
+            document.querySelector('.server-title').innerText = servername;
+            document.getElementById('gamemode').innerText = gamemode;
+            document.getElementById('mapname').innerText = "Map: " + mapname;
+        }
+
+        function SetStatusChanged( status ) {
+            document.getElementById('status').innerText = status;
+        }
+
+        function DownloadingFile( fileName ) {
+            document.getElementById('status').innerText = "Downloading " + fileName;
+        }
+
+        function SetFilesTotal( total ) {
+            window.totalFiles = total;
+            window.filesDownloaded = 0;
+        }
+
+        function SetFilesNeeded( needed ) {
+            // Can be used to calc percentage
+             window.totalFiles = needed + window.filesDownloaded;
+        }
+        
+        // Simple faux-progress logic since GMod doesn't always give total files upfront perfectly
+        // We'll increment the bar slightly on each file download
+        window.progress = 0;
+        function DownloadingFile( fileName ) {
+             document.getElementById('status').innerText = "Downloading: " + fileName;
+             
+             // Visual trickery: approach 100% but slow down as we get closer
+             var increment = (100 - window.progress) / 20;
+             window.progress += increment;
+             document.getElementById('progress').style.width = window.progress + "%";
+        }
+        
+        // Manual override for testing in browser
+        if (!navigator.userAgent.includes("Valve Source Game")) {
+            // Simulate loading for preview
+            document.querySelector('.server-title').innerText = "KYBER CLANS RP";
+            document.getElementById('gamemode').innerText = "StarWarsRP";
+            document.getElementById('mapname').innerText = "Map: rp_venator_v3";
+            
+            let p = 0;
+            setInterval(() => {
+                if(p < 100) {
+                    p += 1;
+                    document.getElementById('progress').style.width = p + "%";
+                    document.getElementById('status').innerText = "Loading resources... (" + p + "%)";
+                }
+            }, 100);
+        }
+    </script>
+</body>
+</html>
